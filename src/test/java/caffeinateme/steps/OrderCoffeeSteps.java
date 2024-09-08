@@ -1,6 +1,7 @@
 package caffeinateme.steps;
 
 import caffeinateme.model.*;
+import io.cucumber.java.DataTableType;
 import io.cucumber.java.ParameterType;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -65,9 +66,14 @@ public class OrderCoffeeSteps {
         assertThat(cathysOrder.getComment()).isEqualTo(orderComment);
     }
 
+    @DataTableType
+    public OrderItem orderItem(Map<String, String> row)
+    {
+        return new OrderItem(row.get("Product"), Integer.parseInt(row.get("Quantity")));
+    }
+
     @When("Cathy places an order for the following items:")
-    public void cathy_places_an_order_for_the_following_items(List<Map<String, String>> items) {
-        var orderedItems = items.stream().map(row-> new OrderItem(row.get("Product"), Integer.parseInt(row.get("Quantity")))).toList();
+    public void cathy_places_an_order_for_the_following_items(List<OrderItem> orderedItems) {
         this.order = new Order(orderedItems, this.customer);
         customer.placesAnOrderFor(this.order).at(coffeeShop);
     }
