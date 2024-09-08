@@ -1,13 +1,14 @@
 package caffeinateme.steps;
 
-import caffeinateme.model.CoffeeShop;
-import caffeinateme.model.Customer;
-import caffeinateme.model.Order;
-import caffeinateme.model.OrderStatus;
+import caffeinateme.model.*;
+import io.cucumber.java.ParameterType;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,10 +28,17 @@ public class OrderCoffeeSteps {
         customer.setDistanceFromShop(distance);
 
     }
-    @When("Cathy orders a {string}")
-    public void cathy_orders_a_product(String orderedProduct) {
 
-        order = Order.of(1, orderedProduct).forCustomer(customer);
+    @ParameterType("\"[^\"]*\"")
+    public Order order(String orderedProduct)
+    {
+        return Order.of(1, orderedProduct).forCustomer(customer);
+    }
+
+    @When("Cathy orders a {order}")
+    public void cathy_orders_a_product(Order order) {
+
+        this.order = order;
         customer.placesAnOrderFor(order).at(coffeeShop);
     }
     @Then("Barry should receive the order")
@@ -45,15 +53,28 @@ public class OrderCoffeeSteps {
         assertThat(cathysOrder.getStatus()).isEqualTo(expectedOrderStatus);
     }
 
-    @When("Cathy orders a {string} with a comment {string}")
-    public void cathy_orders_a_product_with_a_comment(String orderedProduct, String orderComment) {
-        order = Order.of(1, orderedProduct).forCustomer(customer).withComment(orderComment);
-        customer.placesAnOrderFor(order).at(coffeeShop);
+    @When("Cathy orders a {order} with a comment {string}")
+    public void cathy_orders_a_product_with_a_comment(Order order, String orderComment) {
+        this.order = order.withComment(orderComment);
+        customer.placesAnOrderFor(this.order).at(coffeeShop);
     }
 
     @And("the order should have the comment {string}")
-    public void theOrderShouldHaveTheComment(String orderComment) {
+    public void the_order_should_have_the_comment(String orderComment) {
         Order cathysOrder = coffeeShop.getOrderFor(customer).orElseThrow(() -> new AssertionError("No order found "));
         assertThat(cathysOrder.getComment()).isEqualTo(orderComment);
+    }
+
+    @When("Cathy places an order for the following items:")
+    public void cathy_places_an_order_for_the_following_items(List<Map<String, String>> items) {
+        var orderedItems = items.stream().map(row-> new OrderItem(row.get("Product"), Integer.parseInt(row.get("Quantity")))).toList();
+        this.order = new Order(orderedItems, this.customer);
+        customer.placesAnOrderFor(this.order).at(coffeeShop);
+    }
+
+    @And("the order should contain {int} line items")
+    public void the_order_should_contain_line_items(int expectedNumberOfLineItems) {
+        var order = coffeeShop.getOrderFor(customer).orElseThrow(() -> new AssertionError("No order found "));
+        assertThat(order.getItems().size()).isEqualTo(expectedNumberOfLineItems);
     }
 }
