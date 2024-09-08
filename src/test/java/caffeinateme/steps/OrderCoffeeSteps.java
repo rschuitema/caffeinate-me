@@ -77,4 +77,11 @@ public class OrderCoffeeSteps {
         var order = coffeeShop.getOrderFor(customer).orElseThrow(() -> new AssertionError("No order found "));
         assertThat(order.getItems().size()).isEqualTo(expectedNumberOfLineItems);
     }
+
+    @And("the order should contain the following products:")
+    public void the_order_should_contain_the_following_products(List<String> expectedOrderedProducts) {
+        var order = coffeeShop.getOrderFor(customer).orElseThrow(() -> new AssertionError("No order found "));
+        var orderedProducts = order.getItems().stream().map(OrderItem::product).toList();
+        assertThat(orderedProducts).isEqualTo(expectedOrderedProducts);
+    }
 }
